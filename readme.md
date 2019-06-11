@@ -1,4 +1,4 @@
-[DevOps Project](/Topics/DevOps-Project)
+[DevOps Project](/Topics/DevOps-Project.md)
 
 
-[DevOps Project - background details](/Topics/DevOps-Project-background-details)
+[DevOps Project - background details](/Topics/DevOps-Project-background-details.md)
