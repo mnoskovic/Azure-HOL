@@ -1,6 +1,6 @@
-[Create VM](/Topics/VM-Create.md)
+[Create VM](/Topics/VM-create.md)
 
-[Create Web App](/Topics/WebApp-Create.md)
+[Create Web App](/Topics/WebApp-create.md)
 
 [DevOps Project](/Topics/DevOps-Project.md)
 
