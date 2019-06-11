@@ -20,4 +20,5 @@ Click on subscription and in the left menu of the "blade" choose "Resource Provi
 Make sure following resource providers are enabled:
 
 microsoft.web
+
 microsoft.visualstudio
