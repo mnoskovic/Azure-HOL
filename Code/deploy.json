@@ -1,0 +1,309 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "prefix": {
+      "type": "string"
+    },
+    "storageType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ]
+    },
+    
+    "vmName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "vmAdminName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "vmAdminPassword": {
+      "type": "securestring"
+    },
+    "vmOSVersion": {
+      "type": "string",
+      "defaultValue": "2019-Datacenter",
+      "allowedValues": [
+        "2019-Datacenter",
+        "2016-Datacenter"
+      ]
+    }
+  },
+  "variables": {
+    "functionsServicePlanName": "[concat(parameters('prefix'),'devplan')]",
+    "functionsAppServiceName": "[concat(parameters('prefix'),'devfn')]",
+    "storageName": "[concat(parameters('prefix'),'devstorage')]",
+    "devopstrainName": "[concat('devopstrain', uniqueString(resourceGroup().id))]",
+    "vnetName": "[concat(parameters('prefix'), 'trainVnet')]",
+    "migrVnetPrefix": "10.0.0.0/16",
+    "migrVnetSubnet1Name": "Subnet-1",
+    "migrVnetSubnet1Prefix": "10.0.0.0/24",
+    "migrVnetSubnet2Name": "Subnet-2",
+    "migrVnetSubnet2Prefix": "10.0.1.0/24",
+    "trainingVMImagePublisher": "MicrosoftWindowsServer",
+    "trainingVMImageOffer": "WindowsServer",
+    "trainingVMOSDiskName": "trainingVMOSDisk",
+    "trainingVMVmSize": "Standard_B1s",
+    "trainingVMVnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+    "trainingVMSubnetRef": "[concat(variables('trainingVMVnetID'), '/subnets/', variables('migrVnetSubnet1Name'))]",
+    "trainingVMStorageAccountContainerName": "vhds",
+    "trainingVMNicName": "[concat(parameters('vmName'), 'NetworkInterface')]",
+    "trainingPipName": "trainingPip",
+    "appInsightsName": "[concat(parameters('prefix'),'functionai')]"
+  },
+  "resources": [
+    {
+      "name": "[variables('functionsServicePlanName')]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic",
+        "size": "Y1",
+        "capacity": 0
+      },
+      "kind": "functionapp",
+      "apiversion": "2018-02-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+
+      },
+      "type": "Microsoft.Web/serverfarms"
+
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "kind": "functionapp",
+      "name": "[variables('functionsAppServiceName')]",
+      "apiVersion": "2016-08-01",
+      "location": "West Europe",
+      "scale": null,
+      "properties": {
+        "enabled": true,
+        "hostNameSslStates": [
+          {
+            "name": "[concat(variables('functionsAppServiceName'),'.azurewebsites.net')]",
+            "sslState": "Disabled",
+            "virtualIP": null,
+            "thumbprint": null,
+            "toUpdate": null,
+            "hostType": "Standard"
+          },
+          {
+            "name": "[concat(variables('functionsAppServiceName'),'.scm.azurewebsites.net')]",
+            "sslState": "Disabled",
+            "virtualIP": null,
+            "thumbprint": null,
+            "toUpdate": null,
+            "hostType": "Repository"
+          }
+        ],
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms',variables('functionsServicePlanName'))]",
+        "reserved": false,
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "slotSetting": false,
+              "value": "~2"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "node"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts',variables('storageName')),providers('Microsoft.Storage','storageAccounts').apiVersions[0]).keys[0].value,';EndpointSuffix=core.windows.net')]"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "10.14.1"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components',variables('appInsightsName')),'2015-05-01').InstrumentationKey]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms',variables('functionsServicePlanName'))]",
+        "[resourceId('Microsoft.insights/components',variables('appInsightsName'))]"
+      ]
+    },
+    {
+      "type": "microsoft.insights/components",
+      "apiVersion": "2015-05-01",
+      "name": "[variables('appInsightsName')]",
+      "location": "westeurope",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "Request_Source": "IbizaWebAppExtensionCreate"
+      }
+    },
+    {
+      "name": "[variables('storageName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-01-01",
+      "sku": {
+        "name": "[parameters('storageType')]"
+      },
+      "dependsOn": [],
+      "tags": {
+        "displayName": "[variables('storageName')]"
+      },
+      "kind": "Storage"
+    },
+    {
+      "name": "[concat(variables('storageName'),copyIndex())]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-01-01",
+      "sku": {
+        "name": "[parameters('storageType')]"
+      },
+      "dependsOn": [],
+      "tags": {
+        "displayName": "[variables('storageName')]"
+      },
+      "kind": "Storage",
+      "copy": {
+        "name": "storagecopy",
+        "count": 3,
+        "mode": "Parallel"
+      }
+    },
+    {
+      "name": "[variables('vnetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "migrVnet"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('migrVnetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('migrVnetSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('migrVnetSubnet1Prefix')]"
+            }
+          },
+          {
+            "name": "[variables('migrVnetSubnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('migrVnetSubnet2Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('trainingVMNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('trainingPipName'))]"
+      ],
+      "tags": {
+        "displayName": "trainingVMNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('trainingVMSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('trainingPipName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('vmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('trainingVMNicName'))]"
+      ],
+      "tags": {
+        "displayName": "trainingVM"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('trainingVMVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('vmAdminName')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('trainingVMImagePublisher')]",
+            "offer": "[variables('trainingVMImageOffer')]",
+            "sku": "[parameters('vmOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "trainingVMOSDisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2016-01-01').primaryEndpoints.blob, variables('trainingVMStorageAccountContainerName'), '/', variables('trainingVMOSDiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('trainingVMNicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2019-02-01",
+      "name": "[variables('trainingPipName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Basic",
+        "tier": "Regional"
+      },
+      "properties": {
+        "provisioningState": "Succeeded",
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Dynamic",
+        "idleTimeoutInMinutes": 4,
+        "ipTags": []
+      }
+    }
+  ],
+  "outputs": {}
+}
