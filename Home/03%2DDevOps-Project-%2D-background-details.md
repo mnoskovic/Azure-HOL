@@ -19,9 +19,12 @@ Connection between Azure DevOps and Azure (Service connection to allow releasing
 
 - There is Service connection in azure devops 
 
+![image.png](/.attachments/image-de0a8400-4f64-4abf-a62e-d98e88d599db.png)
+![image.png](/.attachments/image-2488f11e-959d-45d3-9882-934c99a9a250.png)
 
+Release pipeline uses this service connection to "integrate" with azure
 
+![image.png](/.attachments/image-401b218d-01e3-43c4-a43f-aee8a98786b9.png)
+![image.png](/.attachments/image-6c3955fe-87b0-4311-91b4-bee6fc96a093.png)
+![image.png](/.attachments/image-75082d4d-a3dd-4b4b-846c-f501ae241582.png)
 
-Uploads sample code into repository
-Establishes build pipeline and triggers it (continuous integration)
-Establishes release pipeline and triggers it once build is done (continuous release)
