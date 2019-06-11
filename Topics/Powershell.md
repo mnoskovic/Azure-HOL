@@ -1,3 +1,7 @@
+## **Prerequisites**
+1. [Install Powershell core](https://github.com/PowerShell/PowerShell/releases)
+1. [Install Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
+
 ## **Powershell**
 Perform start or stop of Virtual Machine in Azure
 
