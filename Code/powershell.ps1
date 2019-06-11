@@ -1,14 +1,11 @@
 param
 (
-    [string] $SubscriptionName="Visual Studio Enterprise",
-    [string] $VMName="plexVM",
-    [string] $resourceGroup="rgPlex",
+    [string] $VMName="",
+    [string] $resourceGroup="",
     [string] $operation="start"
 
 )
-#Login-AzureRmAccount -Subscription $SubscriptionName
-$sub=Get-AzureRmSubscription -SubscriptionName $SubscriptionName
-Select-AzureRmSubscription -SubscriptionObject $sub
+Login-AzureRmAccount 
 $vm=Get-AzureRmVM -Name $VMName -Status -ResourceGroupName $resourceGroup
 if($operation -eq "start")
 {
