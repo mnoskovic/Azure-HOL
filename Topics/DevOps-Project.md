@@ -82,7 +82,7 @@ When you edit the build pipeline you can see the inner parts
 
 You can review the Release pipeline in "Releases"
 
-![image.png](/.`a`ttachments/image-6c3955fe-87b0-4311-91b4-bee6fc96a093.png)
+![image.png](/.attachments/image-6c3955fe-87b0-4311-91b4-bee6fc96a093.png)
 
 When you edit the release pipeline you can see the inner parts
 
