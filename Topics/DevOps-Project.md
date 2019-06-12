@@ -86,7 +86,7 @@ You can review the Release pipeline in "Releases"
 
 When you edit the release pipeline you can see the inner parts
 
-![image.png](/.attachments/image-1d083b6b-ed81-47b8-93d5-96f580f8581d.png)
+![image.png](/.attachments/image-6c3955fe-87b0-4311-91b4-bee6fc96a093.png)
 
 You can review the individual tasks of the release pipeline
 
